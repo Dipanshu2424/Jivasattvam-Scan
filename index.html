@@ -1,0 +1,618 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jivasattvam Scan Analyzer (Simulated)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles using the requested color palette: Black, Green, Red, Purple, Blue Sea */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a; /* Black background */
+            /* Using a solid color for safety on load, retaining a dark tone */
+            background: #1a1a1a; 
+            min-height: 100vh;
+            color: #e5e5e5; /* Light gray text for general content */
+        }
+        /* --- PRIMARY THEME ACCENTS (ORANGE/YELLOW MIX) --- */
+        .app-card {
+            background-color: #333333; /* Dark Gray card background */
+            border: 2px solid #fb923c; /* Stronger Orange/Amber border (Orange 400) */
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.6); /* Orange glow effect */
+        }
+        .scan-container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            border: 3px solid #fcd34d; /* Solid Yellow/Amber border for scan area (Yellow 400) */
+            border-radius: 1rem;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #111827; /* Very dark background for input area */
+            overflow: hidden; 
+            transition: all 0.3s ease;
+        }
+        #hand-image {
+            width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: none; 
+            object-fit: contain;
+            transition: opacity 0.5s;
+        }
+        
+        /* --- Stylish Scan Overlay and Animation (Yellow Scan Line retained) --- */
+        .scan-overlay.scanning {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Added radial gradient for noise/glitch effect, using yellow/amber */
+            background-image: repeating-radial-gradient(circle at center, rgba(253, 224, 71, 0.03) 0%, rgba(253, 224, 71, 0.05) 5%), #111827;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 1rem;
+            /* Combined background pulse with a subtle glitch animation */
+            animation: background-pulse 4s infinite alternate, glitch-noise 0.5s steps(2) infinite; 
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%; /* Changed to cover full height */
+            width: 4px; /* Width of the vertical beam */
+            /* New holographic radial gradient: bright yellow center, transparent edges */
+            background: radial-gradient(circle at center, rgba(253, 224, 71, 1) 0%, rgba(253, 224, 71, 0.5) 50%, transparent 100%);
+            /* Using a dynamic cubic-bezier timing function for movement and a subtle flicker */
+            animation: scan-pulse 2.5s infinite cubic-bezier(0.8, 0.2, 0.2, 0.8), flicker 0.1s infinite alternate; 
+            box-shadow: 0 0 15px rgba(253, 224, 71, 1), 0 0 45px rgba(253, 224, 71, 0.6); /* Intense Yellow shadow */
+            border-radius: 2px;
+        }
+        
+        @keyframes scan-pulse {
+            /* Changed from translateY to translateX for horizontal movement */
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes background-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes glitch-noise {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        
+        @keyframes flicker {
+            0% { opacity: 1; }
+            50% { opacity: 0.95; }
+            100% { opacity: 1; }
+        }
+
+        /* --- Global Glow for Headers/Icons --- */
+        .glowing-header h1, .glowing-section h2, .glowing-section h3, .glowing-section svg {
+            animation: header-glow 1.5s infinite alternate;
+        }
+        @keyframes header-glow {
+            0% { opacity: 1; }
+            100% { opacity: 0.9; }
+        }
+        
+        /* Main Title Color */
+        .text-yellow-400, .glowing-header h1 { color: #fcd34d; text-shadow: 0 0 10px rgba(252, 211, 77, 0.8); }
+        
+        /* ------------------------------------------- */
+        /* Animated Pulse Logo (NEW) */
+        /* ------------------------------------------- */
+        .pulse-logo {
+            animation: heartbeat 1.5s infinite ease-in-out;
+            transform-origin: center;
+        }
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); } /* Subtle larger beat */
+            100% { transform: scale(1); }
+        }
+
+        /* ------------------------------------------- */
+        /* 1. Deficiency Section (RED ALERT) */
+        /* ------------------------------------------- */
+        .text-red-400, #deficiency-section h2 { color: #f87171; text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); } 
+        #deficiency-section { 
+            background: #450a03; /* Dark Maroon/Red background */
+            border: 1px solid #dc2626; /* Red-600 border */
+            animation: red-pulse 2s infinite alternate;
+        }
+        #deficiency-section h2 svg {
+            color: #ef4444; /* Red-500 for icon */
+        }
+        @keyframes red-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } /* Red glow */
+            100% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+        }
+        /* Deficiency Table Styles */
+        .bg-red-700-table { background-color: #b91c1c; } /* Darker Red for table header */
+        .bg-red-900-row { background-color: #450a03; }
+        .bg-red-800-row { background-color: #7f1d1d; }
+        .hover\:bg-red-700-row:hover { background-color: #b91c1c; }
+
+        /* Specific Deficiency Bar Colors (Red Shades) */
+        .bg-alert-red { background-color: #dc2626; } /* Strong Red for high deficiency */
+        .bg-moderate-red { background-color: #ef4444; } /* Red for moderate */
+        .bg-low-red { background-color: #f87171; } /* Lighter Red for low */
+
+        /* ------------------------------------------- */
+        /* 2. Remedy Section (GREEN GLOW) - DIMMED */
+        /* ------------------------------------------- */
+        .text-green-300, #remedy-section h2 { color: #a7f3d0; text-shadow: 0 0 8px rgba(167, 243, 208, 0.4); }
+        /* Dimmed Green Glow */
+        #remedy-section { 
+            background-color: #064e3b; 
+            border: 1px solid #10b981; 
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); /* Dimmed glow */
+            animation: green-pulse-strong 3s infinite alternate; 
+            transition: all 0.3s ease;
+        }
+        @keyframes green-pulse-strong {
+            0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+            100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.7); } /* Reduced max intensity */
+        }
+        .bg-emerald-700-card { background-color: #047857; }
+        .hover\:shadow-xl:hover { box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.5), 0 4px 6px -2px rgba(16, 185, 129, 0.4); } /* Dimmed hover glow too */
+
+        /* ------------------------------------------- */
+        /* 3. Juice and Supplementary Drinks (BLUE SEA) */
+        /* ------------------------------------------- */
+        #juice-section {
+            background-color: #083344; /* Dark Cyan/Teal base */
+            border: 1px solid #2dd4bf; /* Cyan/Teal-400 border */
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.6); /* Blue/Cyan glow */
+            animation: blue-sea-pulse 3s infinite alternate; 
+            transition: all 0.3s ease;
+        }
+        #juice-section h2, #juice-section svg {
+            color: #67e8f9; /* Light Cyan/Teal-300 text */
+            text-shadow: 0 0 15px rgba(103, 232, 249, 0.7); /* Strong Blue/Cyan glow */
+        }
+        @keyframes blue-sea-pulse {
+            0% { box-shadow: 0 0 15px rgba(45, 212, 191, 0.4); }
+            100% { box-shadow: 0 0 25px rgba(45, 212, 191, 0.8); }
+        }
+        .text-blue-sea-highlight { color: #99f6e4; } /* Lighter Cyan-100 for highlights */
+
+
+        /* ------------------------------------------- */
+        /* 4. Exercises (PURPLE) */
+        /* ------------------------------------------- */
+        #exercise-section { 
+            background-color: #3e074e; /* Darker Purple base */
+            border: 1px solid #a855f7; /* Violet/Purple-500 border */
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); /* Purple glow */
+            animation: purple-pulse 3s infinite alternate; 
+            transition: all 0.3s ease;
+        }
+        #exercise-section h2, #exercise-section svg {
+            color: #c4b5fd; /* Light Violet-300 */
+            text-shadow: 0 0 15px rgba(196, 181, 253, 0.7); /* Strong Purple glow */
+        }
+        @keyframes purple-pulse {
+            0% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.3); }
+            100% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.6); }
+        }
+        
+        /* Exercise Recommendations (Purple Sub-section styles adapted for main section) */
+        .bg-purple-main { background-color: #581c87; } 
+        .text-purple-highlight { color: #e9d5ff; }
+        .text-purple-icon { color: #a855f7; }
+        .text-purple-italic { color: #d8b4fe; }
+
+        /* ------------------------------------------- */
+        /* 5. Quote Box (HOT PINK / MAGENTA) - Distinct Color */
+        /* ------------------------------------------- */
+        #quote-box {
+            background-color: #50002A; /* Dark Raspberry/Wine */
+            border: 2px solid #FF69B4; /* Hot Pink Border */
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.8); /* Hot Pink Glow */
+            animation: pink-pulse 3s infinite alternate;
+        }
+        #quote-box .quote-text {
+            color: #FFB6C1; /* Light Pink text */
+            text-shadow: 0 0 8px rgba(255, 105, 180, 0.7);
+            font-size: 1.25rem; /* text-xl */
+        }
+        @keyframes pink-pulse {
+            0% { box-shadow: 0 0 10px rgba(255, 105, 180, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(255, 105, 180, 1); }
+        }
+
+        /* Custom style for Times New Roman font (applied to the About text) */
+        .font-times-new-roman {
+            font-family: 'Times New Roman', serif;
+        }
+        /* Custom extra-small font size (smaller than text-xs) */
+        .text-xxs {
+            font-size: 0.65rem; /* Approximately 10.4px */
+        }
+
+        /* Button Styling (Yellow/Amber for Action) */
+        #scan-button {
+            background-color: #fcd34d; /* Yellow/Amber */
+            color: #333; /* Dark text for contrast */
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        #scan-button:hover:not(:disabled) {
+            background-color: #fbbf24; /* Darker yellow */
+            transform: translateY(-2px);
+        }
+
+        /* Chart Styling */
+        .bar-container {
+            height: 15px;
+            background-color: #4b5563; /* Dark gray for empty part of the bar */
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            transition: width 1s ease-out;
+            border-radius: 4px;
+        }
+        
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center flex-col">
+
+    <div class="max-w-xl w-full app-card p-6 md:p-10 rounded-2xl shadow-2xl">
+
+        <div class="flex items-center justify-center mb-4 glowing-header">
+            <svg class="w-10 h-10 mr-3 text-yellow-400 pulse-logo" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h3l3-7 3 14 3-7 3 3"/>
+            </svg>
+            <h1 class="text-4xl font-extrabold text-white">
+                <span class="text-yellow-400">Jiva</span>sattvam Scan
+            </h1>
+        </div>
+        
+        <p class="text-center text-gray-300 mb-4">Upload a clear image of your hand for spectral analysis.</p>
+
+        <div id="quote-box" class="p-6 mt-6 mb-6 rounded-xl text-center shadow-2xl">
+            <p class="quote-text font-serif italic mb-2">"A healthy outside starts from the inside."</p>
+            <p class="text-sm font-semibold text-gray-200">~ Robert Urich</p>
+        </div>
+
+        <div class="scan-container mb-6" id="scan-area-box">
+            <img id="hand-image" src="" alt="Uploaded Hand Image Preview">
+            <input type="file" id="image-upload" accept="image/*" class="p-4 w-full text-sm text-yellow-400 rounded-lg cursor-pointer bg-gray-800 hover:bg-gray-700 transition" aria-label="Upload Hand Image">
+            
+            <div id="scan-overlay" class="scan-overlay">
+                <div class="scan-line"></div>
+            </div>
+            <p id="status-message" class="text-center text-sm text-gray-400 mt-2 p-2">Upload an image to begin.</p>
+        </div>
+
+        <button id="scan-button"
+            class="w-full font-bold py-3 px-4 rounded-xl shadow-lg disabled:opacity-50"
+            disabled>
+            Start Vital Scan
+        </button>
+
+        <div id="results-area" class="mt-8 hidden">
+            <div id="deficiency-section" class="mb-8 p-4 rounded-xl glowing-section">
+                <h2 class="text-2xl font-bold text-red-400 mb-4 text-center flex items-center justify-center">
+                    <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Deficiencies Detected
+                </h2>
+                
+                <div class="overflow-x-auto shadow-md rounded-lg mb-6">
+                    <table class="min-w-full text-sm text-left text-white">
+                        <thead class="text-xs text-red-200 uppercase bg-red-700-table">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Nutrient</th>
+                                <th scope="col" class="px-6 py-3">Role</th>
+                                <th scope="col" class="px-6 py-3">Symptom</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deficiency-table-body">
+                            </tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-xl font-semibold text-red-400 mb-3 text-center">Simulated Deficiency Level</h3>
+                <div id="deficiency-list" class="space-y-4">
+                    </div>
+            </div>
+
+            <div id="remedy-section" class="p-4 bg-green-900 rounded-xl border border-green-700 mb-8 glowing-section">
+                <h2 class="text-2xl font-bold text-green-300 mb-3 text-center flex items-center justify-center">
+                    <svg class="w-8 h-8 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Recommended Home Remedies
+                </h2>
+                <div id="remedy-list" class="space-y-4">
+                    </div>
+            </div>
+            
+            <div id="juice-section" class="p-6 mb-8 rounded-xl shadow-lg glowing-section">
+                <h2 class="text-2xl font-bold text-blue-sea mb-4 text-center flex items-center justify-center">
+                    <svg class="w-8 h-8 mr-2 text-blue-sea-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a7 7 0 007-7c0-1.57-.42-3.04-1.15-4.32L12 1.6l-5.85 11.08C5.42 14.96 5 16.43 5 18a7 7 0 007 4z"></path></svg>
+                    Juice and Supplementary Drinks
+                </h2>
+                <div id="juice-content" class="space-y-6">
+                    </div>
+            </div>
+
+
+            <div id="exercise-section" class="p-6 rounded-xl shadow-lg glowing-section">
+                <h2 class="text-2xl font-bold text-purple-highlight mb-4 text-center flex items-center justify-center">
+                    <svg class="w-8 h-8 mr-2 text-purple-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M12 1.5c-3.116 0-5.65 2.534-5.65 5.65s2.534 5.65 5.65 5.65s5.65-2.534 5.65-5.65S15.116 1.5 12 1.5zM12 14c-4.418 0-8 3.582-8 8h1.5c0-3.582 2.918-6.5 6.5-6.5s6.5 2.918 6.5 6.5H20c0-4.418-3.582-8-8-8zM12 24c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5S13.38 24 12 24z"/>
+                    </svg>
+                    Exercises
+                </h2>
+                <div id="exercise-content" class="space-y-6">
+                    </div>
+            </div>
+
+            </div>
+    </div>
+    
+    <p class="text-xs text-gray-500 mt-4">
+        This Project is done by <span class="text-yellow-400 font-semibold">Dipanshu Mukherjee</span>
+    </p>
+
+    <script>
+        const imageUpload = document.getElementById('image-upload');
+        const handImage = document.getElementById('hand-image');
+        const scanButton = document.getElementById('scan-button');
+        const resultsArea = document.getElementById('results-area');
+        const deficiencyList = document.getElementById('deficiency-list');
+        const remedyList = document.getElementById('remedy-list');
+        const statusMessage = document.getElementById('status-message');
+        const scanOverlay = document.getElementById('scan-overlay');
+        const scanAreaBox = document.getElementById('scan-area-box');
+        const deficiencyTableBody = document.getElementById('deficiency-table-body');
+        const juiceContent = document.getElementById('juice-content'); 
+        const exerciseContent = document.getElementById('exercise-content'); 
+
+        let imageLoaded = false; 
+
+        // Base data without fixed deficiency levels
+        const baseDeficiencies = [
+            { name: "Vitamin D", lack: "Sunlight exposure & Bone Health", symptom: "Low energy, bone weakness, mood changes.", foods: ["Fatty fish (salmon, tuna)", "Fortified milk and cereals", "Spending 15-20 mins in sunlight"], exercise: "Outdoor brisk walking or cycling (to maximize sun exposure)", juice: "Fortified Orange Juice with a splash of Almond Milk" },
+            { name: "Vitamin B12", lack: "Energy & Nerve Function", symptom: "Tingling in hands/feet, severe fatigue, pale skin.", foods: ["Meat, fish, poultry", "Eggs and dairy products", "Nutritional yeast and fortified plant milks"], exercise: "Gentle Chair Yoga (to support nervous system relaxation)", juice: "Green Energy Blend: Spinach, Apple, Banana, and Nutritional Yeast" },
+            { name: "Iron", lack: "Oxygen Transport & Fighting Fatigue", symptom: "Extreme tiredness, shortness of breath, headache.", foods: ["Red meat, liver", "Spinach, kale, dark leafy greens", "Lentils and beans (pair with Vitamin C for absorption)"], exercise: "Restorative Yoga (e.g., Supported Savasana) to manage fatigue", juice: "Red Power Drink: Beetroot, Carrot, Orange (Vitamin C helps absorption)" },
+            { name: "Vitamin C", lack: "Immunity & Collagen Production", symptom: "Easy bruising, slow wound healing, bleeding gums.", foods: ["Citrus fruits (oranges, lemons)", "Bell peppers (especially red)", "Broccoli and strawberries"], exercise: "Light Cardiovascular Workouts (to boost circulation and healing)", juice: "Citrus Zest: Orange, Grapefruit, and a handful of Strawberries" },
+            { name: "Magnesium", lack: "Muscle & Nerve Relaxation", symptom: "Muscle cramps, restlessness, difficulty sleeping.", foods: ["Almonds, cashews, pumpkin seeds", "Avocado and bananas", "Dark chocolate (70% cocoa or higher)"], exercise: "Deep Stretching and Foam Rolling (to relieve muscle tension)", juice: "Seed & Nut Milk: Banana, Cocoa Powder, Almond Butter, Water" },
+            { name: "Folate (B9)", lack: "Cell Growth & Red Blood Cells", symptom: "Fatigue, gray hair, mouth sores.", foods: ["Leafy greens (spinach, asparagus)", "Beans and peas (black-eyed peas)", "Fortified bread and pasta"], exercise: "Diaphragmatic Breathing Exercises (to enhance blood oxygenation)", juice: "Green Leaf Blend: Kale, Spinach, Cucumber, Lemon" },
+            { name: "Zinc", lack: "Immune Support & Skin Integrity", symptom: "Slow wound healing, acne, dry skin, weak hair.", foods: ["Oysters (highest source)", "Red meat and poultry", "Pumpkin seeds and lentils"], exercise: "Moderate Resistance Training (supports muscle and zinc utilization)", juice: "Tropical Immunity Blend: Pineapple, Ginger, and a handful of Pumpkin Seeds" },
+            { name: "Vitamin A", lack: "Vision, Immune System, & Cell Growth", symptom: "Dry, rough skin (Follicular hyperkeratosis), night blindness.", foods: ["Sweet potatoes, carrots, spinach", "Liver and eggs", "Apricots and cantaloupe"], exercise: "Calisthenics (Improves circulation to support skin cell turnover)", juice: "Carotenoid Boost: Carrot, Mango, and a touch of Turmeric" },
+        ];
+
+        // Helper function to generate a random integer
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Function to assign a random deficiency level to each nutrient
+        function generateRandomResults() {
+            return baseDeficiencies.map(def => ({
+                ...def,
+                // Assign a random deficiency level between 20% and 95%
+                level: getRandomInt(20, 95) 
+            }));
+        }
+
+
+        // Function to reset the scan area and results
+        function clearScan() {
+            // 1. Reset visual elements
+            resultsArea.classList.add('hidden');
+            handImage.style.display = 'none';
+            imageUpload.style.display = 'block';
+            scanAreaBox.classList.remove('p-0'); 
+            
+            // 2. Reset input and state
+            imageUpload.value = ''; // Clear the file input
+            imageLoaded = false;
+            scanButton.disabled = true;
+            scanButton.textContent = 'Start Vital Scan';
+
+            // 3. Clear dynamic content
+            deficiencyList.innerHTML = '';
+            remedyList.innerHTML = '';
+            deficiencyTableBody.innerHTML = '';
+            juiceContent.innerHTML = ''; 
+            exerciseContent.innerHTML = ''; 
+
+            // 4. Update status message
+            statusMessage.textContent = 'Upload an image to begin.';
+        }
+
+        // Function to handle image file selection
+        imageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    handImage.src = e.target.result;
+                    handImage.style.display = 'block'; 
+                    imageUpload.style.display = 'none'; 
+                    scanAreaBox.classList.add('p-0'); 
+
+                    handImage.onload = () => {
+                        scanAreaBox.style.minHeight = 'auto'; 
+                    };
+
+                    imageLoaded = true;
+                    scanButton.disabled = false;
+                    scanButton.textContent = 'Start Vital Scan'; // Ensure button text is correct
+                    statusMessage.textContent = 'Image loaded. Press Scan to begin analysis.';
+                    resultsArea.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // If file selection is cancelled, reset as if clearing
+                clearScan();
+            }
+        });
+
+
+        // 2. Simulate Scan and Analysis (UPDATED FOR DYNAMIC STATUS)
+        function simulateScan() {
+            if (!imageLoaded) {
+                statusMessage.textContent = 'Please upload an image first!';
+                return;
+            }
+
+            scanButton.disabled = true;
+            resultsArea.classList.add('hidden');
+            
+            // Clear previous content to prepare for new data
+            deficiencyList.innerHTML = '';
+            remedyList.innerHTML = '';
+            deficiencyTableBody.innerHTML = '';
+            juiceContent.innerHTML = ''; 
+            exerciseContent.innerHTML = ''; 
+
+            // Start dynamic status update
+            statusMessage.innerHTML = '<span class="text-yellow-400 font-semibold">Initiating Spectral Analysis...</span>';
+            scanOverlay.classList.add('scanning');
+
+            const scanSteps = [
+                'Analyzing bio-spectral signature...',
+                'Cross-referencing cellular health markers...',
+                'Detecting nutrient absorption rates...',
+                'Mapping deficiency signatures...',
+                'Generating personalized recommendations...',
+                'Scan complete.'
+            ];
+
+            let stepIndex = 0;
+
+            function updateScanStatus() {
+                if (stepIndex < scanSteps.length) {
+                    statusMessage.textContent = scanSteps[stepIndex];
+                    stepIndex++;
+                    setTimeout(updateScanStatus, 800); 
+                } else {
+                    scanOverlay.classList.remove('scanning');
+                    statusMessage.textContent = 'Analysis Complete. Results Ready.';
+                    setTimeout(displayResults, 500);
+                }
+            }
+
+            // Start the simulation
+            setTimeout(updateScanStatus, 500);
+        } // End of simulateScan
+
+        // 3. Display Results
+        function displayResults() {
+            resultsArea.classList.remove('hidden');
+            scanButton.disabled = false;
+            scanButton.textContent = 'Clear Scan & Start New'; 
+
+            // *** IMPORTANT CHANGE: Generate new random levels on every scan ***
+            const randomizedDeficiencies = generateRandomResults();
+
+            // Sort the new randomized array based on deficiency level (highest first)
+            const sortedDeficiencies = randomizedDeficiencies.sort((a, b) => b.level - a.level);
+
+            // Populate Deficiency Table
+            sortedDeficiencies.forEach(deficiency => {
+                const row = document.createElement('tr');
+                // The styling will change dynamically based on the random level
+                row.className = `border-b border-red-900 ${deficiency.level > 70 ? 'bg-red-900-row' : 'bg-red-800-row'} hover:bg-red-700-row transition`;
+                row.innerHTML = `
+                    <th scope="row" class="px-6 py-4 font-medium whitespace-nowrap text-red-100">
+                        ${deficiency.name}
+                    </th>
+                    <td class="px-6 py-4">
+                        ${deficiency.lack}
+                    </td>
+                    <td class="px-6 py-4 text-red-200">
+                        ${deficiency.symptom}
+                    </td>
+                `;
+                deficiencyTableBody.appendChild(row);
+            });
+            
+            // Populate Deficiency Bar Chart
+            sortedDeficiencies.forEach(deficiency => {
+                let colorClass = 'bg-low-red';
+                if (deficiency.level > 75) {
+                    colorClass = 'bg-alert-red';
+                } else if (deficiency.level > 40) {
+                    colorClass = 'bg-moderate-red';
+                }
+
+                const barHtml = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-24 text-sm font-medium">${deficiency.name}</span>
+                        <div class="bar-container flex-grow">
+                            <div class="bar ${colorClass}" style="width: ${deficiency.level}%;"></div>
+                        </div>
+                        <span class="w-10 text-right text-red-300 text-sm">${deficiency.level}%</span>
+                    </div>
+                `;
+                deficiencyList.insertAdjacentHTML('beforeend', barHtml);
+            });
+            
+            // Populate Home Remedies, Juices, and Exercises (based on top 3 deficiencies)
+            const topDeficiencies = sortedDeficiencies.slice(0, 3);
+            
+            remedyList.innerHTML = topDeficiencies.map(def => `
+                <div class="bg-emerald-700-card p-4 rounded-lg hover:shadow-xl transition">
+                    <p class="font-bold text-green-300">Targeting ${def.name} Deficiency:</p>
+                    <ul class="list-disc list-inside ml-4 text-sm text-green-200 mt-1 space-y-1">
+                        ${def.foods.map(food => `<li>Consume more: <span class="font-semibold">${food}</span></li>`).join('')}
+                    </ul>
+                </div>
+            `).join('');
+
+            juiceContent.innerHTML = topDeficiencies.map(def => `
+                <div class="p-4 bg-gray-900 rounded-lg border border-cyan-700 hover:shadow-2xl transition duration-300">
+                    <p class="text-lg font-bold text-blue-sea-highlight mb-1">${def.juice}</p>
+                    <p class="text-sm text-gray-300">Recommended for boosting <span class="font-semibold text-blue-sea-highlight">${def.name}</span> levels.</p>
+                </div>
+            `).join('');
+
+            exerciseContent.innerHTML = topDeficiencies.map(def => `
+                <div class="p-4 bg-purple-main rounded-lg border border-purple-400 hover:shadow-2xl transition duration-300">
+                    <p class="text-lg font-bold text-purple-highlight mb-1">${def.exercise}</p>
+                    <p class="text-sm text-gray-300">Recommended to support the function of <span class="font-semibold text-purple-italic">${def.name}</span>.</p>
+                </div>
+            `).join('');
+
+            
+        }
+
+        // 4. Main Event Listener (Completed)
+        scanButton.addEventListener('click', function() {
+            if (scanButton.textContent.includes('Clear')) {
+                // If button says 'Clear Scan & Start New', clear the results.
+                clearScan();
+            } else {
+                // Otherwise, perform the scan
+                simulateScan();
+            }
+        });
+    </script>
+</body>
+</html>
